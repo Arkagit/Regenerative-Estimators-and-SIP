@@ -1,10 +1,15 @@
 set.seed(1234)
+library(mcmcse)
 
 source("Data_gen.R")
 
-reps = 10
+reps = 100
 R = rep(0, reps)
 regVAR1 = matrix(0, nrow = reps, ncol = 4)
+ess_reg1 = rep(0, reps)
+
+
+
 
 for (k in 1:reps) {
 	dat = Gen_data(nsim)
@@ -63,8 +68,9 @@ for (k in 1:reps) {
 		}
 	}
 
-	#dataset = cbind(dat$x, dat$y)
+	dataset = cbind(dat$x, dat$y)
 
+	ess_reg1[k] = multiESS(dataset, covmat = variance(Z7, regen_times_7))
 
 	#dat1e4 = dataset[1:1e4,]
 	#dat1e5 = dataset[1:1e5,]
@@ -79,4 +85,4 @@ for (k in 1:reps) {
 	print(k)
 	}
 
-	save("regVAR1" = regVAR1, file = "1step.Rdata")
+	save("regVAR1" = regVAR1, "ESS_reg1" = ess_reg1, file = "1step.Rdata")

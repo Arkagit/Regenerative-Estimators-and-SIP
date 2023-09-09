@@ -3,15 +3,19 @@ set.seed(1234)
 source("Data_gen.R")
 
 load("Expected_S.Rdata")
-load("1step.Rdata")
+#load("1step.Rdata")
 library(mcmcse)
 
 
-reps = 10
+reps = 100
 R = rep(0, reps)
 regVAR2 = matrix(0, nrow = reps, ncol = 4)
 BMopt = matrix(0, nrow = reps, ncol = 4)
 BMsq = matrix(0, nrow = reps, ncol = 4)
+
+ess_reg2 = rep(0, reps)
+ess_bmopt = rep(0, reps)
+ess_bmsq = rep(0, reps)
 
 for (k in 1:reps) {
 	dat = Gen_data(nsim)
@@ -78,6 +82,11 @@ for (k in 1:reps) {
 	dat1e6 = dataset[1:1e6,]
 	dat1e7 = dataset[1:1e7,]
 
+	ess_reg2[k] = multiESS(dataset, covmat = variance(Z7, regen_times_7))
+	ess_bmsq[k] = multiESS(dataset, covmat = mcse.multi(dat1e7, method = "bm", r = 1, size = floor((1e4)^(1/2 + .00001)))$cov)
+	ess_bmopt[k] = multiESS(dataset, covmat = mcse.multi(dat1e7, method = "bm", r = 1)$cov)
+	
+
 	regVAR2[k,1] = norm(Tr - variance(Z4, regen_times_4), type = "F")
 	regVAR2[k,2] = norm(Tr - variance(Z5, regen_times_5), type = "F")
 	regVAR2[k,3] = norm(Tr - variance(Z6, regen_times_6), type = "F")
@@ -97,5 +106,6 @@ for (k in 1:reps) {
 	print(k)
 	}
 
-save("regVAR2" = regVAR2, "BMopt" = BMopt, "BMsq" = BMsq, "reps" = reps, file = "2step.Rdata")
+
+save("regVAR2" = regVAR2, "BMopt" = BMopt, "BMsq" = BMsq, "ESS_reg2" = ess_reg2, "ESS_bmopt" = ess_bmopt, "ESS_bmsq" = ess_bmsq, "reps" = reps, file = "2step.Rdata")
 	

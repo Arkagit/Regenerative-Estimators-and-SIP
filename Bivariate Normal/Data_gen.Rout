@@ -20,6 +20,8 @@ Type 'q()' to quit R.
 > set.seed(1234)
 > 
 > load("Expected_S.Rdata")
+> Es
+[1] 0.6257649
 > library(mcmcse)
 > 
 > # Initialization
@@ -31,7 +33,7 @@ Type 'q()' to quit R.
 > mu2 = 0
 > h = 1
 > y_star = 0
-> rho = 2
+> rho = 0.05
 > 
 > log_10_n = c(4,5,6,7)
 > 
@@ -41,24 +43,24 @@ Type 'q()' to quit R.
 + 	y = rep(0, nsim)
 + 	s = rep(0, nsim)
 + 	x[1] = 5 # 1st initial point
-+ 	y[1] = rnorm(1, mu2 + 2*(x[1] - mu1), sqrt(omega2 - rho^(2)/omega1))
-+ 	s[1] = (pnorm(h, mu1 + 2*(y_star - mu2)/5, sqrt(omega1 - rho^(2)/omega2)) - 
-+ 		    pnorm(-h, mu1 + 2*(y_star - mu2)/5, sqrt(omega1 - rho^(2)/omega2))) * 
++ 	y[1] = rnorm(1, mu2 + rho*(x[1] - mu1), sqrt(omega2 - rho^(2)/omega1))
++ 	s[1] = (pnorm(h, mu1 + rho*(y_star - mu2)/omega2, sqrt(omega1 - rho^(2)/omega2)) - 
++ 		    pnorm(-h, mu1 + rho*(y_star - mu2)/omega2, sqrt(omega1 - rho^(2)/omega2))) * 
 + 	        exp(- rho^(2)*((y[1] - mu2)^(2) - (y_star - mu2)^(2)) / (2*omega2*(omega1*omega2 - rho^(2)))) * 
 + 	         exp(-h*rho*omega2*(y[1] - y_star)/(omega1*omega2 - rho^(2)))
 + 
 + 
 + 	for(i in 2:nsim){
-+ 		x[i] = rnorm(1, mu1 + 2*(y[i-1] - mu2)/5, sqrt(omega1 - rho^(2)/omega2))
-+ 		y[i] = rnorm(1, mu2 + 2*(x[i] - mu1), sqrt(omega2 - rho^(2)/omega1))
++ 		x[i] = rnorm(1, mu1 + rho*(y[i-1] - mu2)/omega2, sqrt(omega1 - rho^(2)/omega2))
++ 		y[i] = rnorm(1, mu2 + rho*(x[i] - mu1), sqrt(omega2 - rho^(2)/omega1))
 + 		if(y[i] - y_star > 0){
-+ 			s[i] = (pnorm(h, mu1 + 2*(y_star - mu2)/5, sqrt(omega1 - rho^(2)/omega2)) - 
-+ 		    pnorm(-h, mu1 + 2*(y_star - mu2)/5, sqrt(omega1 - rho^(2)/omega2))) * 
++ 			s[i] = (pnorm(h, mu1 + rho*(y_star - mu2)/omega2, sqrt(omega1 - rho^(2)/omega2)) - 
++ 		    pnorm(-h, mu1 + rho*(y_star - mu2)/omega2, sqrt(omega1 - rho^(2)/omega2))) * 
 + 		    exp(- rho^(2)*((y[i] - mu2)^(2) - (y_star - mu2)^(2)) / (2*omega2*(omega1*omega2 - rho^(2)))) * 
 + 		    exp(-h*rho*omega2*(y[i] - y_star)/(omega1*omega2 - rho^(2)))
 + 		}else{
-+ 			s[i] = (pnorm(h, mu1 + 2*(y_star - mu2)/5, sqrt(omega1 - rho^(2)/omega2)) - 
-+ 		    pnorm(-h, mu1 + 2*(y_star - mu2)/5, sqrt(omega1 - rho^(2)/omega2))) * 
++ 			s[i] = (pnorm(h, mu1 + rho*(y_star - mu2)/omega2, sqrt(omega1 - rho^(2)/omega2)) - 
++ 		    pnorm(-h, mu1 + rho*(y_star - mu2)/omega2, sqrt(omega1 - rho^(2)/omega2))) * 
 + 		    exp(- rho^(2)*((y[i] - mu2)^(2) - (y_star - mu2)^(2)) / (2*omega2*(omega1*omega2 - rho^(2)))) * 
 + 		    exp(h*rho*omega2*(y[i] - y_star)/(omega1*omega2 - rho^(2)))
 + 		}	
@@ -71,7 +73,10 @@ Type 'q()' to quit R.
 > 
 > # True Asymptotic Variance
 > Tr = matrix(c(omega1*(omega1*omega2 + rho^(2))/(omega1*omega2 - rho^(2)), 2*omega1*omega2*rho/(omega1*omega2 - rho^(2)), 2*omega1*omega2*rho/(omega1*omega2 - rho^(2)), omega2*(omega1*omega2 + rho^(2))/(omega1*omega2 - rho^(2))), nrow = 2)
-> 
+> Tr
+         [,1]     [,2]
+[1,] 1.001001 0.100050
+[2,] 0.100050 5.005003
 > # Construction of function for regeneration
 > variance = function(Z, regen_times){
 + 	R = length(regen_times)
@@ -92,4 +97,4 @@ Type 'q()' to quit R.
 > 
 > proc.time()
    user  system elapsed 
-  0.147   0.023   0.180 
+  0.145   0.021   0.180 

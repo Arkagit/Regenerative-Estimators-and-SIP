@@ -1,6 +1,8 @@
 source("Data_gen.R")
 load("1step.Rdata")
 load("2step.Rdata")
+     
+log_10_n = c(4,5,6,7)
 
 add_legend <- function(...) {
   opar <- par(fig=c(0, 1, 0, 1), oma=c(0, 0, 0, 0), 
@@ -11,6 +13,12 @@ add_legend <- function(...) {
 }
 
 
+pdf("boxplot.pdf", height = 6, width = 6)
+par(mar = c(5.1, 4.8, 4.1, 2.1))
+boxplot(ess_reg1,ess_reg2, ess_bmopt, ess_bmsq, xlab = "Variance Estimators", ylab = "Effective Sample Size",
+	main = "ESS for different variance estimators", col = c("blue", "green","yellow","purple"),
+   names = c("1-step","2-step","BM(opt)","BM(theory)"))
+dev.off()
 
 BMopt_frob = apply(BMopt, 2, sd)/sqrt(reps)
 BMsq_frob = apply(BMsq, 2, sd)/sqrt(reps)
@@ -21,7 +29,7 @@ regVAR2_frob = apply(regVAR2, 2, sd)/sqrt(reps)
 pdf("plot_frob.pdf", height = 6, width = 6)
 par(mar = c(5.1, 4.8, 4.1, 2.1))
 
-plot(log_10_n, colMeans(regVAR2), type = 'l', ylim =  c(-1, 25), xlab = "log_10_(n)", ylab = "Frobenius norm",
+plot(log_10_n, colMeans(regVAR2), type = 'l', ylim = c(-0.1, 1), xlab = "log_10_(n)", ylab = "Frobenius norm",
 	main = "Frobenius distance from True Covariance")
 segments(x0 = log_10_n, y0 = colMeans(regVAR2) - 1.96*regVAR2_frob, 
 	y1 = colMeans(regVAR2) + 1.96*regVAR2_frob)
