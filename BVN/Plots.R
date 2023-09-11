@@ -1,7 +1,7 @@
 source("Initialization.R")
 load("NE.Rdata")
      
-log_10_n = log(samp_size)/log(10)
+log_10_n = log(samp_size)
 
 add_legend <- function(...) {
   opar <- par(fig=c(0, 1, 0, 1), oma=c(0, 0, 0, 0), 

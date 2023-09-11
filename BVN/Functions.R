@@ -40,9 +40,10 @@ regen2_variance = function(xydata){
 		}
 	}
 
-	ess = multiESS(xydata[,-3], covmat = variance(Z, regen_times))
-	regVAR2 = norm(Tr - variance(Z, regen_times), type = "F")
-	return(list("ESS" = ess, "Fnorm" = regVAR2))
+	#ess = multiESS(xydata[,-3], covmat = variance(Z, regen_times))
+	#regVAR2 = norm(Tr - variance(Z, regen_times), type = "F")
+	cov = variance(Z, regen_times)
+	return(list("cov" = cov))
 }
 
 regen1_variance = function(xydata){
@@ -63,9 +64,10 @@ regen1_variance = function(xydata){
 		}
 	}
 
-	ess = multiESS(xydata[,-3], covmat = variance(Z, regen_times))
-	regVAR1 = norm(Tr - variance(Z, regen_times), type = "F")
-	return(list("ESS" = ess, "Fnorm" = regVAR1))
+	#ess = multiESS(xydata[,-3], covmat = variance(Z, regen_times))
+	#regVAR1 = norm(Tr - variance(Z, regen_times), type = "F")
+	cov = variance(Z, regen_times)
+	return(list("cov" = cov))
 }
 
 Gen_data = function(nsim){

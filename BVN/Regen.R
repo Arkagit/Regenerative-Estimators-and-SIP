@@ -8,7 +8,7 @@ library(mcmcse)
 library(foreach)
 library(doParallel)
 
-norm_reg1 = rep(0, length(samp_size))
+norm_reg1 = ls()
 norm_reg2 = rep(0, length(samp_size))
 norm_bmopt = rep(0, length(samp_size))
 norm_bmth = rep(0, length(samp_size))
@@ -19,6 +19,8 @@ ess_bmopt = rep(0, reps)
 ess_bmth = rep(0, reps)
 
 reps = 10
+
+cv = list()
 
 parallel::detectCores()
 n.cores <- parallel::detectCores() - 1
@@ -36,24 +38,24 @@ doParallel::registerDoParallel(cl = my.cluster)
 
 #check if it is registered (optional)
 foreach::getDoParRegistered()
-
-norm = foreach(k = 1:reps) %do% {
+# rep -> samp_size -> estimator
+covar = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 	dat = Gen_data(max(samp_size))
 	for(j in 1:length(samp_size)){
 		work_d = dat[1:samp_size[j],]
 
-		dummy1 = regen1_variance(work_d)
-		norm_reg1[j] = dummy1$Fnorm
+		dummy = list()
 
-		dummy2 = regen2_variance(work_d)
-		norm_reg2[j] = dummy2$Fnorm
+		dummy[[1]] = regen1_variance(work_d)$cov
 
-		dummy3 = mcse.multi(work_d[,-3], method = "bm", r = 1)$cov
-		norm_bmopt[j] = norm(Tr - dummy3, type = "F")
+		dummy[[2]] = regen2_variance(work_d)$cov
 
-		dummy4 = mcse.multi(work_d[,-3], method = "bm", size = floor((samp_size[j])^(1/2 + .00001)),
+		dummy[[3]] = mcse.multi(work_d[,-3], method = "bm", r = 1)$cov
+
+		dummy[[4]] = mcse.multi(work_d[,-3], method = "bm", size = floor((samp_size[j])^(1/2 + .00001)),
 		 r = 1)$cov
-		norm_bmth[j] = norm(Tr - dummy4, type = "F")
+
+		cv[[j]] = dummy
 
 		#if(samp_size[j] == max(samp_size)){
 			#ess_reg1[k] = dummy1$ESS
@@ -63,37 +65,71 @@ norm = foreach(k = 1:reps) %do% {
 		#}
 		#print(samp_size[j])
 	}
-	rbind(norm_reg1, norm_reg2, norm_bmopt, norm_bmth)
-
+	cv
 	#print(k)
 }
 
-norm
+covar
 
-norm_reg1 = matrix(0, nrow = reps, ncol = 4)
-norm_reg2 = matrix(0, nrow = reps, ncol = 4)
-norm_bmopt = matrix(0, nrow = reps, ncol = 4)
-norm_bmth = matrix(0, nrow = reps, ncol = 4)
+norm_reg1 = matrix(0, nrow = reps, ncol = length(samp_size))
+norm_reg2 = matrix(0, nrow = reps, ncol = length(samp_size))
+norm_bmopt = matrix(0, nrow = reps, ncol = length(samp_size))
+norm_bmth = matrix(0, nrow = reps, ncol = length(samp_size))
+
 
 for(i in 1:reps){
-	norm_reg1[i,] = norm[[i]][1,1:length(samp_size)]
-	norm_reg2[i,] = norm[[i]][2,1:length(samp_size)]
-	norm_bmopt[i,] = norm[[i]][3,1:length(samp_size)]
-	norm_bmth[i,] = norm[[i]][4,1:length(samp_size)]
+	for(j in 1:length(samp_size)){
+		norm_reg1[i,j] = norm(covar[[i]][[j]][[1]], type = "F")/norm(Tr, type = "F")
+		norm_reg2[i,j] = norm(covar[[i]][[j]][[2]], type = "F")/norm(Tr, type = "F")
+		norm_bmopt[i,j] = norm(covar[[i]][[j]][[3]], type = "F")/norm(Tr, type = "F")
+		norm_bmth[i,j] = norm(covar[[i]][[j]][[4]], type = "F")/norm(Tr, type = "F")
+	}
+	
 }
 
-for(k in 1:reps){
-	dat = Gen_data(nsize)
+ESS = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
+	dat = Gen_data(max(samp_size))
+	for(j in 1:length(samp_size)){
+		work_d = dat[1:samp_size[j],]; dim(work_d)
 
-	ess_reg1[k] = regen1_variance(dat)$ESS
-	ess_reg2[k] = regen2_variance(dat)$ESS
+		dummy = list()
 
-	dummy3 = mcse.multi(dat[,-3], method = "bm", r = 1)$cov
-	ess_reg1[k] = multiESS(dat[,-3], covmat = dummy3)
+		reg1 = multiESS(work_d, covmat = regen1_variance(work_d)$cov)
+		dummy[[1]] = reg1
 
-	dummy4 = mcse.multi(dat[,-3], method = "bm", size = floor((nsize)^(1/2 + .00001)),
-		 r = 1)$cov
-	ess_reg1[k] = multiESS(dat[,-3], covmat = dummy4)
+		reg2 = multiESS(work_d, covmat = regen2_variance(work_d)$cov)
+		dummy[[2]] = reg2
+
+		bmopt = multiESS(work_d[,-3], covmat = mcse.multi(work_d, method = "bm", r = 1)$cov)
+		dummy[[3]] = bmopt
+
+		bmth = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", size = floor((samp_size[j])^(1/2 + .00001)),r = 1)$cov)
+		dummy[[4]] = bmth
+
+		cv[[j]] = dummy
+
+	}
+	cv
+}
+
+
+ESS
+
+
+ess_reg1 = matrix(0, nrow = reps, ncol = length(samp_size))
+ess_reg2 = matrix(0, nrow = reps, ncol = length(samp_size))
+ess_bmopt = matrix(0, nrow = reps, ncol = length(samp_size))
+ess_bmth = matrix(0, nrow = reps, ncol = length(samp_size))
+
+
+for(i in 1:reps){
+	for(j in 1:length(samp_size)){
+		ess_reg1[i,j] = ESS[[i]][[j]][[1]]
+		ess_reg2[i,j] = ESS[[i]][[j]][[2]]
+		ess_bmopt[i,j] = ESS[[i]][[j]][[3]]
+		ess_bmth[i,j] = ESS[[i]][[j]][[4]]
+	}
+	
 }
 
 save(norm_reg1, ess_reg1, norm_reg2, ess_reg2, norm_bmopt, ess_bmopt, norm_bmth, ess_bmth, file = "NE.Rdata")
