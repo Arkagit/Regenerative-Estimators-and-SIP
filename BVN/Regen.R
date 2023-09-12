@@ -26,11 +26,13 @@ n.cores <- parallel::detectCores() - 1
 #print(my.cluster)
 
 #register it to be used by %dopar%
-#doParallel::registerDoParallel(cl = my.cluster)
+doParallel::registerDoParallel(cores = n.cores)
 
 #check if it is registered (optional)
 #foreach::getDoParRegistered()
+
 # rep -> samp_size -> estimator
+
 covar = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 	dat = Gen_data(max(samp_size))
 	for(j in 1:length(samp_size)){
@@ -47,17 +49,8 @@ covar = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 		dummy[[4]] = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/2 + .00001)))$cov
 
 		cv[[j]] = dummy
-
-		#if(samp_size[j] == max(samp_size)){
-			#ess_reg1[k] = dummy1$ESS
-			#ess_reg2[k] = dummy2$ESS
-			#ess_bmopt[k] = multiESS(work_d[,-3], covmat = dummy3)
-			#ess_bmth[k] = multiESS(work_d[,-3], covmat = dummy4)
-		#}
-		#print(samp_size[j])
 	}
 	cv
-	#print(k)
 }
 
 covar
@@ -94,7 +87,7 @@ n.cores <- parallel::detectCores() - 1
 #print(my.cluster)
 
 #register it to be used by %dopar%
-#doParallel::registerDoParallel(cl = my.cluster)
+doParallel::registerDoParallel(cores = n.cores)
 
 #check if it is registered (optional)
 #foreach::getDoParRegistered()
@@ -107,15 +100,13 @@ ESS = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 
 		dummy = list()
 
-		dummy[[1]] = multiESS(work_d, covmat = regen1_variance(work_d)$cov)
+		dummy[[1]] = multiESS(work_d[,-3], covmat = regen1_variance(work_d)$cov)/samp_size[j]
 
-		dummy[[2]] = multiESS(work_d, covmat = regen2_variance(work_d)$cov)
+		dummy[[2]] = multiESS(work_d[,-3], covmat = regen2_variance(work_d)$cov)/samp_size[j]
 		
-		dummy[[3]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/3)))$cov)
+		dummy[[3]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/3)))$cov)/samp_size[j]
 		
-		dummy[[4]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/2 + .00001)))$cov)
-		
-		dummy[[5]] = multiESS(work_d[,-3], covmat = Tr)
+		dummy[[4]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/2 + .00001)))$cov)/samp_size[j]
 
 		cv[[j]] = dummy
 	}
@@ -130,7 +121,6 @@ ess_reg1 = matrix(0, nrow = reps, ncol = length(samp_size))
 ess_reg2 = matrix(0, nrow = reps, ncol = length(samp_size))
 ess_bmopt = matrix(0, nrow = reps, ncol = length(samp_size))
 ess_bmth = matrix(0, nrow = reps, ncol = length(samp_size))
-ess_tr = matrix(0, nrow = reps, ncol = length(samp_size))
 
 
 for(i in 1:reps){
@@ -139,12 +129,11 @@ for(i in 1:reps){
 		ess_reg2[i,j] = ESS[[i]][[j]][[2]]
 		ess_bmopt[i,j] = ESS[[i]][[j]][[3]]
 		ess_bmth[i,j] = ESS[[i]][[j]][[4]]
-		ess_tr[i,j] = ESS[[i]][[j]][[5]]
 	}
 	
 }
 
-save(norm_reg1, ess_reg1, norm_reg2, ess_reg2, norm_bmopt, ess_bmopt, norm_bmth, ess_bmth, ess_tr, file = "NE.Rdata")
+save(norm_reg1, ess_reg1, norm_reg2, ess_reg2, norm_bmopt, ess_bmopt, norm_bmth, ess_bmth, file = "NE.Rdata")
 
 
 

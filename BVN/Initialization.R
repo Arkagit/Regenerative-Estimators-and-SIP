@@ -12,6 +12,7 @@ mu1 = 0
 mu2 = 0
 y_star = 0
 h = 1
+Target_mat = matrix(c(omega1, rho, rho, omega2), nrow = 2, ncol = 2)
 
 # Output initialization
 x = rep(0, nsim)
