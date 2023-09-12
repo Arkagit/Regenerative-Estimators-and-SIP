@@ -2,7 +2,6 @@ set.seed(1234)
 
 source("Initialization.R")
 source("Functions.R")
-source("batch_const.R")
 load("Es.Rdata")
 
 library(mcmcse)
@@ -10,7 +9,7 @@ library(foreach)
 library(doParallel)
 
 reps = 500
-
+const = .05
 # Parallelizing norm calculation
 
 cv = list()
@@ -45,7 +44,7 @@ covar = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 
 		dummy[[3]] = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/3)))$cov
 
-		dummy[[4]] = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/2)))$cov
+		dummy[[4]] = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/2 + .00001)))$cov
 
 		cv[[j]] = dummy
 
@@ -112,9 +111,9 @@ ESS = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 
 		dummy[[2]] = multiESS(work_d, covmat = regen2_variance(work_d)$cov)
 		
-		dummy[[3]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d, method = "bm", r = 1)$cov)
+		dummy[[3]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/3)))$cov)
 		
-		dummy[[4]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", size = floor((samp_size[j])^(1/2 + .00001)),r = 1)$cov)
+		dummy[[4]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/2 + .00001)))$cov)
 		
 		dummy[[5]] = multiESS(work_d[,-3], covmat = Tr)
 
