@@ -2,7 +2,7 @@
 nsim = 1e8
 nsize = 1e7
 reps = 10
-samp_size = c(1e4, 5e4, 1e5, 5e5, 1e6, 1e7)
+samp_size = c(1e4, 5e4, 1e5, 5e5, 1e6)
 
 # Study parameters
 omega1 = 1

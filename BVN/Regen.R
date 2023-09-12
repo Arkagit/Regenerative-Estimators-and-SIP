@@ -9,7 +9,7 @@ library(mcmcse)
 library(foreach)
 library(doParallel)
 
-reps = 10
+reps = 500
 
 # Parallelizing norm calculation
 
@@ -18,19 +18,19 @@ cv = list()
 parallel::detectCores()
 n.cores <- parallel::detectCores() - 1
 
-my.cluster <- parallel::makeCluster(
-  n.cores, 
-  type = "PSOCK"
-  )
+#my.cluster <- parallel::makeCluster(
+#  n.cores, 
+#  type = "PSOCK"
+#  )
 
 #check cluster definition (optional)
-print(my.cluster)
+#print(my.cluster)
 
 #register it to be used by %dopar%
-doParallel::registerDoParallel(cl = my.cluster)
+#doParallel::registerDoParallel(cl = my.cluster)
 
 #check if it is registered (optional)
-foreach::getDoParRegistered()
+#foreach::getDoParRegistered()
 # rep -> samp_size -> estimator
 covar = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 	dat = Gen_data(max(samp_size))
@@ -86,19 +86,19 @@ cv = list()
 parallel::detectCores()
 n.cores <- parallel::detectCores() - 1
 
-my.cluster <- parallel::makeCluster(
-  n.cores, 
-  type = "PSOCK"
-  )
+#my.cluster <- parallel::makeCluster(
+#  n.cores, 
+#  type = "PSOCK"
+#  )
 
 #check cluster definition (optional)
-print(my.cluster)
+#print(my.cluster)
 
 #register it to be used by %dopar%
-doParallel::registerDoParallel(cl = my.cluster)
+#doParallel::registerDoParallel(cl = my.cluster)
 
 #check if it is registered (optional)
-foreach::getDoParRegistered()
+#foreach::getDoParRegistered()
 # rep -> samp_size -> estimator
 
 ESS = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
@@ -111,11 +111,11 @@ ESS = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 		dummy[[1]] = multiESS(work_d, covmat = regen1_variance(work_d)$cov)
 
 		dummy[[2]] = multiESS(work_d, covmat = regen2_variance(work_d)$cov)
-
+		
 		dummy[[3]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d, method = "bm", r = 1)$cov)
-
+		
 		dummy[[4]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", size = floor((samp_size[j])^(1/2 + .00001)),r = 1)$cov)
-
+		
 		dummy[[5]] = multiESS(work_d[,-3], covmat = Tr)
 
 		cv[[j]] = dummy
