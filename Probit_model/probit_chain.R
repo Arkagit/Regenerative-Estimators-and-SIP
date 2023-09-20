@@ -130,7 +130,7 @@ regen_var <- function(Z, mu, regen_steps){
     A3 = A3 + (Z[i+1,] - Z_bar)%*%t(Z[i,] - Z_bar)/dim(Z)[1]
   }
 
-  Sigma_1 = length(regen_steps)*(A1 + A2 + A3)/(mu)^(2)
+  Sigma_1 = (A1 + A2 + A3)/(mu)^(2)
 
   return(Sigma_1)
 }
