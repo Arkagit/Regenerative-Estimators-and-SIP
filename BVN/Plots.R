@@ -28,7 +28,7 @@ regVAR2_frob = apply(norm_reg2, 2, sd)/sqrt(reps)
 pdf("plot_frob.pdf", height = 6, width = 6)
 par(mar = c(5.1, 4.8, 4.1, 2.1))
 
-plot(log_10_n, colMeans(norm_reg2), type = 'l', ylim = c(-0.1, 0.4), xlab = expression(log[10]~n), ylab = "Frobenius norm",
+plot(log_10_n, colMeans(norm_reg2), type = 'l', ylim = c(0, 6), xlab = expression(log[10]~n), ylab = "Frobenius norm",
 	main = "Frobenius distance from True Covariance")
 segments(x0 = log_10_n, y0 = colMeans(norm_reg2) - 1.96*regVAR2_frob, 
 	y1 = colMeans(norm_reg2) + 1.96*regVAR2_frob)
@@ -61,7 +61,7 @@ ymax = max(ess_reg1, ess_reg2, ess_bmth, ess_bmopt)
 pdf("plot_ess.pdf", height = 6, width = 6)
 par(mar = c(5.1, 4.8, 4.1, 2.1))
 
-plot(log_10_n, colMeans(ess_reg2), type = 'l', ylim = c(0.985, 1.015),xlab = expression(log[10]~n), ylab = "ESS/n",
+plot(log_10_n, colMeans(ess_reg2), type = 'l', ylim = c(0.73, 0.77),xlab = expression(log[10]~n), ylab = "ESS/n",
 	main = "Effective Sample Size")
 segments(x0 = log_10_n, y0 = colMeans(ess_reg2) - 1.96*regVAR2_ess, 
 	y1 = colMeans(ess_reg2) + 1.96*regVAR2_ess)

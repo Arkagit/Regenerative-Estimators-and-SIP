@@ -1,4 +1,4 @@
-set.seed(1234)
+set.seed(1111)
 
 source("Initialization.R")
 source("Functions.R")
@@ -9,7 +9,7 @@ library(foreach)
 library(doParallel)
 
 reps = 500
-const = .05
+const = 0.25
 # Parallelizing norm calculation
 
 cv = list()
@@ -32,17 +32,25 @@ doParallel::registerDoParallel(cores = n.cores)
 #foreach::getDoParRegistered()
 
 # rep -> samp_size -> estimator
+#covar = list()
 
 covar = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
+#for(k in 1:reps){
 	dat = Gen_data(max(samp_size))
+	regens2 = rbinom(max(samp_size), 1, Es * dat[,3])
+	regens1 = rbinom(max(samp_size), 1, dat[,3])
+
+
 	for(j in 1:length(samp_size)){
 		work_d = dat[1:samp_size[j],]
+		work_regen1 = regens1[1:samp_size[j]]
+		work_regen2 = regens2[1:samp_size[j]]
 
 		dummy = list()
 
-		dummy[[1]] = regen1_variance(work_d)$cov
+		dummy[[1]] = regen1_variance(work_d, work_regen1)$cov
 
-		dummy[[2]] = regen2_variance(work_d)$cov
+		dummy[[2]] = regen2_variance(work_d, work_regen2)$cov
 
 		dummy[[3]] = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/3)))$cov
 
@@ -51,6 +59,7 @@ covar = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 		cv[[j]] = dummy
 	}
 	cv
+	#print(paste(k))
 }
 
 covar
@@ -93,16 +102,23 @@ doParallel::registerDoParallel(cores = n.cores)
 #foreach::getDoParRegistered()
 # rep -> samp_size -> estimator
 
+#ESS = list()
+
 ESS = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
+#for(k in 1:reps){
 	dat = Gen_data(max(samp_size))
+	regens2 = rbinom(max(samp_size), 1, Es * dat[,3])
+	regens1 = rbinom(max(samp_size), 1, dat[,3])
 	for(j in 1:length(samp_size)){
 		work_d = dat[1:samp_size[j],]; dim(work_d)
+		work_regen1 = regens1[1:samp_size[j]]
+		work_regen2 = regens2[1:samp_size[j]]
 
 		dummy = list()
 
-		dummy[[1]] = multiESS(work_d[,-3], covmat = regen1_variance(work_d)$cov)/samp_size[j]
+		dummy[[1]] = multiESS(work_d[,-3], covmat = regen1_variance(work_d, work_regen1)$cov)/samp_size[j]
 
-		dummy[[2]] = multiESS(work_d[,-3], covmat = regen2_variance(work_d)$cov)/samp_size[j]
+		dummy[[2]] = multiESS(work_d[,-3], covmat = regen2_variance(work_d, work_regen2)$cov)/samp_size[j]
 		
 		dummy[[3]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/3)))$cov)/samp_size[j]
 		
@@ -111,6 +127,7 @@ ESS = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 		cv[[j]] = dummy
 	}
 	cv
+	#print(paste(k))
 }
 
 
@@ -133,7 +150,7 @@ for(i in 1:reps){
 	
 }
 
-save(norm_reg1, ess_reg1, norm_reg2, ess_reg2, norm_bmopt, ess_bmopt, norm_bmth, ess_bmth, file = "NE.Rdata")
+save(reps, norm_reg1, ess_reg1, norm_reg2, ess_reg2, norm_bmopt, ess_bmopt, norm_bmth, ess_bmth, file = "NE.Rdata")
 
 
 

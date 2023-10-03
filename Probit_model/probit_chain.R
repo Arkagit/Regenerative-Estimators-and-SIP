@@ -85,7 +85,7 @@ density_tn = function(inp, betaj){
 
 
 # Function of success probabilities for Cuoidal D* for Random Scan
-etaj_cube_randm <- function(betaj0, zj0, betaj1, zj1){
+etaj_cube_randm2 <- function(betaj0, zj0, betaj2, zj2){
   ret <- 0
   t.starj <- t(zj0 - z.star)%*%as.matrix(x)
   
@@ -96,10 +96,12 @@ etaj_cube_randm <- function(betaj0, zj0, betaj1, zj1){
             0.5*t(z.star)%*%as.matrix(x)%*%inv.xtx%*%t(x)%*%z.star + 
             log(density_mv(betaj1, inv.xtx.tx %*% z.star, inv.xtx)) + sum(log(density_tn(zj1, betaj1)))
     
-    ret <- ret - log(0.5*density_mv(betaj1, inv.xtx.tx%*%zj0, inv.xtx) + 
-          0.5*prod(density_tn(zj1,betaj0)))
+    ret <- ret - log(density_mv(betaj1, inv.xtx.tx%*%zj0, inv.xtx) + 
+          prod(density_tn(zj1,betaj0)) + 
+          density_mv(betaj2, inv.xtx.tx%*%zj2, inv.xtx)*prod(density_tn(zj2,betaj0)) +
+            density_mv(betaj2, inv.xtx.tx%*%zj0, inv.xtx)*prod(density_tn(zj2,betaj2)) )
     
-    ret <- 2*exp(ret)
+    ret <- exp(ret)
   }
   return(ret)
 }
@@ -116,52 +118,70 @@ etaj_cube_det <- function(betaj0, zj0, betaj1, zj1){
 }
 
 # Regenerative Variance
+#regen_var <- function(Z, mu, regen_steps){
+#  p = dim(Z)[2]
+#
+#  A1 = matrix(0, nrow= p, ncol = p)
+#  A2 = matrix(0, nrow= p, ncol = p)
+#  A3 = matrix(0, nrow= p, ncol = p)
+#
+#  A1 = var(Z)
+# for (i in 1:(length(regen_steps)-1)) {
+ #   A2 = A2 + (Z[i,] - Z_bar)%*%t(Z[i+1,] - Z_bar)/dim(Z)[1]
+  #  A3 = A3 + (Z[i+1,] - Z_bar)%*%t(Z[i,] - Z_bar)/dim(Z)[1]
+ # }
+
+#  Sigma_1 = (A1 + A2 + A3)/mu
+
+ # return(Sigma_1)
+#}
+
 regen_var <- function(Z, mu, regen_steps){
-  A1 = matrix(0, nrow= 3, ncol = 3)
-  A2 = matrix(0, nrow= 3, ncol = 3)
-  A3 = matrix(0, nrow= 3, ncol = 3)
-
-  for(i in 1:length(regen_steps)){
-    A1 = A1 + (Z[i,] - Z_bar)%*%t(Z[i,] - Z_bar)/dim(Z)[1]
-  }
-
-  for (i in 1:(length(regen_steps)-1)) {
-    A2 = A2 + (Z[i,] - Z_bar)%*%t(Z[i+1,] - Z_bar)/dim(Z)[1]
-    A3 = A3 + (Z[i+1,] - Z_bar)%*%t(Z[i,] - Z_bar)/dim(Z)[1]
-  }
-
-  Sigma_1 = (A1 + A2 + A3)/(mu)^(2)
-
-  return(Sigma_1)
-}
-
-regen_var2 <- function(Z, mu, regen_steps){
+  p = dim(Z)[2]
   betak = Z_bar/mu
   # Calculating sample variance using regenerations
-  W = matrix(0, nrow = length(regen_steps), ncol = 3)
+  W = matrix(0, nrow = length(regen_steps), ncol = p)
 
   for (j in 1:length(regen_steps)) {
     W[j, ] = (Z[j, ] - t(Z_bar))  - t(betak * (regen_length[j]  - mu))
   }
 
-  cov_lag1 = matrix(0, nrow = 3, ncol = 3) # Initializing auto-covariances
+  cov_lag1 = matrix(0, nrow = p, ncol = p) # Initializing auto-covariances
   for (i in 1:(length(regen_steps) - 1)) {
     cov_lag1 = cov_lag1 + (W[i, ] - colMeans(W))%*%t(W[i + 1, ] - colMeans(W)) / length(regen_steps)
   }
-  Sigma_2 = (var(W) + cov_lag1 + t(cov_lag1)) / (mu^2)
+  Sigma_2 = (var(W) + cov_lag1 + t(cov_lag1)) / (mu)
   return(Sigma_2)
 }
 
+regen_var2 <- function(Z, mu, regen_steps){
+  p = dim(Z)[2]
+
+  regen_steps = which(regen_det == 1) + 1
+  regen_points = c(1, regen_steps[- length(regen_steps)])
+  regen_length = regen_steps - regen_points
+
+  A = matrix(0, nrow = p, ncol = p)
+
+  for (j in 1:length(regen_steps)) {
+    A = A + (Z[j,] - beta_reg_mean*regen_length[j])%*%t(Z[j,] - beta_reg_mean*regen_length[j])
+  }
+  return(A/(length(regen_steps)*mu))
+}
+
+
+
 regen_var3 <- function(Z, mu, regen_steps){
+  p = dim(Z)[2]
   betak = Z_bar/mu
   # Calculating sample variance using regenerations
-  W = matrix(0, nrow = length(regen_steps), ncol = 3)
+  W = matrix(0, nrow = length(regen_steps), ncol = p)
 
   for (j in 1:length(regen_steps)) {
     W[j, ] = (Z[j, ] - t(Z_bar))  - t(betak * (regen_length[j]  - mu))
   }
 
-  Sigma_3 = mcse.multi(W, method = "bm", size = 2)$cov/(mu^2)
+  Sigma_3 = mcse.multi(W, method = "bm", size = 2)$cov/(mu)
   return(Sigma_3)
 }
 

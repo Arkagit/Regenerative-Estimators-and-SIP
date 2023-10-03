@@ -4,25 +4,29 @@ library(mcmcse)
 library(foreach)
 library(doParallel)
 
-source("Small_set.R")
+load("Small.Rdata")
+source("Data_gen.R")
+source("probit_chain.R")
 
 reps = 10
 Ratio = 15
-samp_size = 5e6
+samp_size = 1e6
 # Parallelizing norm calculation
 
 cv = list()
 
-#parallel::detectCores()
-#n.cores <- parallel::detectCores() - 1
+parallel::detectCores()
+n.cores <- parallel::detectCores() - 1
 
 #register it to be used by %dopar%
-#doParallel::registerDoParallel(cores = n.cores)
+doParallel::registerDoParallel(cores = n.cores)
+k=1
 
-#covar = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
+covar = foreach(k = 1:reps, .packages = c("mcmcse","truncnorm")) %dopar% {
 #covar  = list()
 
-for(k in 1:reps){
+
+#for(k in 1:reps){
 
 	ac_data = probit_gibbs(dat = dat, nsim = samp_size)
 	eta1_det = rep(0, samp_size)
@@ -42,7 +46,7 @@ for(k in 1:reps){
 	regen_points = c(1, regen_steps[- length(regen_steps)])
 	regen_length = regen_steps - regen_points
 
-	Z = matrix(0, nrow = length(regen_steps), ncol = 3)
+	Z = matrix(0, nrow = length(regen_steps), ncol = dim(x)[2])
 
 	for (j in 1:length(regen_steps)) {
 	    foo <- ac_data$beta[regen_points[j]:(regen_points[j] + regen_length[j]), ]
@@ -52,16 +56,18 @@ for(k in 1:reps){
 
 	Z_bar = colMeans(Z)
 
+	beta_reg_mean = colMeans(ac_data$beta[1:max(regen_steps),])
+
 	# Mean length of regenerations
 	mu = mean(regen_length)
 
 	dummy = list()
 
-	dummy[[1]] = mcse.multi(ac_data$beta, method = "bm", r = 1, size = "sqroot")$cov/mu
+	dummy[[1]] = mcse.multi(ac_data$beta, method = "bm", r = 1, size = "sqroot")$cov
 
-	dummy[[2]] = mcse.multi(ac_data$beta, method = "bm", r = 1)$cov/mu
+	dummy[[2]] = mcse.multi(ac_data$beta, method = "bm", r = 1)$cov
 
-	dummy[[3]] = mcse.multi(ac_data$beta, method = "bm", r = 1, size = 5e4)$cov/mu
+	dummy[[3]] = mcse.multi(ac_data$beta, method = "bm", r = 1, size = 5e4)$cov
 
 	dummy[[4]] = regen_var(Z, mu, regen_steps)
 
@@ -71,10 +77,12 @@ for(k in 1:reps){
 
 	cv[[k]] = dummy
 
-	print(paste(k))
+	cv[[k]]
+
+	#print(paste(k))
 }
 
-cv
+covar
 
 
 norm_reg1 = rep(0, length(reps))
@@ -104,11 +112,5 @@ boxplot(norm_bmth, norm_bmopt, norm_bm1e4, norm_reg1, norm_reg2, norm_reg3,
 
 dev.off()
 
-pdf(file="Boxplot2.pdf")
-
-boxplot(norm_bmth, norm_bmopt, norm_bm1e4, norm_reg2, norm_reg3,
-	names = c("BM(0.5)", "BM(1/3)", "BM(1e4)", "REG2", "REG3"))
-
-dev.off()
 
 

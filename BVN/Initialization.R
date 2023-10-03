@@ -1,13 +1,13 @@
 # Reps
 nsim = 1e8
 nsize = 1e7
-reps = 10
+reps = 500
 samp_size = c(1e4, 5e4, 1e5, 5e5, 1e6)
 
 # Study parameters
 omega1 = 1
 omega2 = 5
-rho = 0.05
+rho = 1.5
 mu1 = 0
 mu2 = 0
 y_star = 0
