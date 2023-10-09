@@ -137,24 +137,31 @@ etaj_cube_det <- function(betaj0, zj0, betaj1, zj1){
 #}
 
 regen_var <- function(Z, mu, regen_steps){
+  Z_bar = colMeans(Z)
   p = dim(Z)[2]
   betak = Z_bar/mu
+
+  regen_steps = which(regen_det == 1) + 1
+  regen_points = c(1, regen_steps[- length(regen_steps)])
+  regen_length = regen_steps - regen_points
+
   # Calculating sample variance using regenerations
   W = matrix(0, nrow = length(regen_steps), ncol = p)
 
   for (j in 1:length(regen_steps)) {
-    W[j, ] = (Z[j, ] - t(Z_bar))  - t(betak * (regen_length[j]  - mu))
+    W[j, ] = (Z[j, ] - t(Z_bar)*regen_length[j]/tau_bar)
   }
 
   cov_lag1 = matrix(0, nrow = p, ncol = p) # Initializing auto-covariances
   for (i in 1:(length(regen_steps) - 1)) {
-    cov_lag1 = cov_lag1 + (W[i, ] - colMeans(W))%*%t(W[i + 1, ] - colMeans(W)) / length(regen_steps)
+    cov_lag1 = cov_lag1 + W[i, ]%*%t(W[i + 1, ])/length(regen_steps)
   }
-  Sigma_2 = (var(W) + cov_lag1 + t(cov_lag1)) / (mu)
+  Sigma_2 = (var(W) + cov_lag1 + t(cov_lag1)) / mu
   return(Sigma_2)
 }
 
 regen_var2 <- function(Z, mu, regen_steps){
+  Z_bar = colMeans(Z)
   p = dim(Z)[2]
 
   regen_steps = which(regen_det == 1) + 1
@@ -172,8 +179,14 @@ regen_var2 <- function(Z, mu, regen_steps){
 
 
 regen_var3 <- function(Z, mu, regen_steps){
+  Z_bar = colMeans(Z)
   p = dim(Z)[2]
   betak = Z_bar/mu
+
+  regen_steps = which(regen_det == 1) + 1
+  regen_points = c(1, regen_steps[- length(regen_steps)])
+  regen_length = regen_steps - regen_points
+  
   # Calculating sample variance using regenerations
   W = matrix(0, nrow = length(regen_steps), ncol = p)
 

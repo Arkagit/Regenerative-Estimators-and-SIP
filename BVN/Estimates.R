@@ -8,7 +8,7 @@ library(mcmcse)
 library(foreach)
 library(doParallel)
 
-reps = 500
+reps = 1000
 const = 0.25
 # Parallelizing norm calculation
 
@@ -52,7 +52,7 @@ covar = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 
 		dummy[[2]] = regen2_variance(work_d, work_regen2)$cov
 
-		dummy[[3]] = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/3)))$cov
+		dummy[[3]] = mcse.multi(work_d[,-3], method = "bm", r = 1)$cov
 
 		dummy[[4]] = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/2 + .00001)))$cov
 
@@ -120,7 +120,7 @@ ESS = foreach(k = 1:reps, .packages = c("mcmcse")) %dopar% {
 
 		dummy[[2]] = multiESS(work_d[,-3], covmat = regen2_variance(work_d, work_regen2)$cov)/samp_size[j]
 		
-		dummy[[3]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/3)))$cov)/samp_size[j]
+		dummy[[3]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1)$cov)/samp_size[j]
 		
 		dummy[[4]] = multiESS(work_d[,-3], covmat = mcse.multi(work_d[,-3], method = "bm", r = 1, size = floor(const*(samp_size[j])^(1/2 + .00001)))$cov)/samp_size[j]
 
