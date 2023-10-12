@@ -9,18 +9,18 @@ load("Small.Rdata")
 source("Data_gen.R")
 source("probit_chain.R")
 
-reps = 500
-Ratio = 15
-samp_size = c(1e4, 5e4, 1e5, 5e5, 1e6)
+reps = 1000
+#Ratio = 15
+samp_size = c(1e4, 5e4, 1e5, 3e5, 5e5, 8e5, 1e6)
 # Parallelizing norm calculation
 
 cv = list()
 
-parallel::detectCores()
-n.cores <- parallel::detectCores() - 1
+#parallel::detectCores()
+#n.cores <- parallel::detectCores() - 1
 
 #register it to be used by %dopar%
-doParallel::registerDoParallel(cores = n.cores)
+#doParallel::registerDoParallel(cores = n.cores)
 
 EST  = list()
 

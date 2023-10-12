@@ -1,7 +1,7 @@
 source("Initialization.R")
 load("NE.Rdata")
      
-log_10_n = log(samp_size)/log(10)
+#log_10_n = log(samp_size)/log(10)
 
 add_legend <- function(...) {
   opar <- par(fig=c(0, 1, 0, 1), oma=c(0, 0, 0, 0), 
@@ -24,25 +24,27 @@ BMth_frob = apply(norm_bmth, 2, sd)/sqrt(reps)
 regVAR1_frob = apply(norm_reg1, 2, sd)/sqrt(reps)
 regVAR2_frob = apply(norm_reg2, 2, sd)/sqrt(reps)
 
+low_norm = min(colMeans(norm_bmopt), colMeans(norm_bmth), colMeans(norm_reg1), colMeans(norm_reg2))
+up_norm = max(colMeans(norm_bmopt), colMeans(norm_bmth), colMeans(norm_reg1), colMeans(norm_reg2))
 
 pdf("plot_frob.pdf", height = 6, width = 6)
 par(mar = c(5.1, 4.8, 4.1, 2.1))
 
-plot(log_10_n, colMeans(norm_reg2), type = 'l', ylim = c(0, 6), xlab = expression(log[10]~n), ylab = "Frobenius norm",
-	main = "Frobenius distance from True Covariance")
-segments(x0 = log_10_n, y0 = colMeans(norm_reg2) - 1.96*regVAR2_frob, 
+plot(samp_size, colMeans(norm_reg2), type = 'l', ylim = c(low_norm, 1.6),
+ xlab = "Chain Length", ylab = "Frobenius norm", main = "Frobenius distance from True Covariance")
+segments(x0 = samp_size, y0 = colMeans(norm_reg2) - 1.96*regVAR2_frob, 
 	y1 = colMeans(norm_reg2) + 1.96*regVAR2_frob)
 
-lines(log_10_n, colMeans(norm_reg1), type = 'l', col = "red")
-segments(x0 = log_10_n, y0 = colMeans(norm_reg1) - 1.96*regVAR1_frob, 
+lines(samp_size, colMeans(norm_reg1), type = 'l', col = "red")
+segments(x0 = samp_size, y0 = colMeans(norm_reg1) - 1.96*regVAR1_frob, 
 	y1 = colMeans(norm_reg1) + 1.96*regVAR1_frob, col = "red")
 
-lines(log_10_n, colMeans(norm_bmopt), type = 'l', col = "blue")
-segments(x0 = log_10_n, y0 = colMeans(norm_bmopt) - 1.96*BMopt_frob, 
+lines(samp_size, colMeans(norm_bmopt), type = 'l', col = "blue")
+segments(x0 = samp_size, y0 = colMeans(norm_bmopt) - 1.96*BMopt_frob, 
 	y1 = colMeans(norm_bmopt) + 1.96*BMopt_frob, col = "blue")
 
-lines(log_10_n, colMeans(norm_bmth), type = 'l', col = "skyblue")
-segments(x0 = log_10_n, y0 = colMeans(norm_bmth) - 1.96*BMth_frob, 
+lines(samp_size, colMeans(norm_bmth), type = 'l', col = "skyblue")
+segments(x0 = samp_size, y0 = colMeans(norm_bmth) - 1.96*BMth_frob, 
 	y1 = colMeans(norm_bmth) + 1.96*BMth_frob, col = "skyblue")
 
 abline(h = 0, lty = 2)
@@ -52,34 +54,39 @@ legend("topright", bty = "n",legend = c("2-step", "1-step", "BM(optimal)", "BM(T
 dev.off()
 
 
+#######################################################
+
+
 BMopt_ess = apply(ess_bmopt, 2, sd)/sqrt(reps)
 BMth_ess = apply(ess_bmth, 2, sd)/sqrt(reps)
 regVAR1_ess = apply(ess_reg1, 2, sd)/sqrt(reps)
 regVAR2_ess = apply(ess_reg2, 2, sd)/sqrt(reps)
-ymax = max(ess_reg1, ess_reg2, ess_bmth, ess_bmopt)
+
+low_ess = min(colMeans(ess_reg1), colMeans(ess_reg2), colMeans(ess_bmth), colMeans(ess_bmopt))
+up_ess = max(colMeans(ess_reg1), colMeans(ess_reg2), colMeans(ess_bmth), colMeans(ess_bmopt))
 
 pdf("plot_ess.pdf", height = 6, width = 6)
 par(mar = c(5.1, 4.8, 4.1, 2.1))
 
-plot(log_10_n, colMeans(ess_reg2), type = 'l', ylim = c(0.73, 0.77),xlab = expression(log[10]~n), ylab = "ESS/n",
-	main = "Effective Sample Size")
-segments(x0 = log_10_n, y0 = colMeans(ess_reg2) - 1.96*regVAR2_ess, 
+plot(samp_size, colMeans(ess_reg2), type = 'l', ylim = c(low_ess, 0.76),
+	xlab = "Chain Length", ylab = "ESS/n", main = "Effective Sample Size")
+segments(x0 = samp_size, y0 = colMeans(ess_reg2) - 1.96*regVAR2_ess, 
 	y1 = colMeans(ess_reg2) + 1.96*regVAR2_ess)
 
-lines(log_10_n, colMeans(ess_reg1), type = 'l', col = "red")
-segments(x0 = log_10_n, y0 = colMeans(ess_reg1) - 1.96*regVAR1_ess, 
+lines(samp_size, colMeans(ess_reg1), type = 'l', col = "red")
+segments(x0 = samp_size, y0 = colMeans(ess_reg1) - 1.96*regVAR1_ess, 
 	y1 = colMeans(ess_reg1) + 1.96*regVAR1_ess, col = "red")
 
-lines(log_10_n, colMeans(ess_bmopt), type = 'l', col = "blue")
-segments(x0 = log_10_n, y0 = colMeans(ess_bmopt) - 1.96*BMopt_ess, 
+lines(samp_size, colMeans(ess_bmopt), type = 'l', col = "blue")
+segments(x0 = samp_size, y0 = colMeans(ess_bmopt) - 1.96*BMopt_ess, 
 	y1 = colMeans(ess_bmopt) + 1.96*BMopt_ess, col = "blue")
 
-lines(log_10_n, colMeans(ess_bmth), type = 'l', col = "skyblue")
-segments(x0 = log_10_n, y0 = colMeans(ess_bmth) - 1.96*BMth_ess, 
+lines(samp_size, colMeans(ess_bmth), type = 'l', col = "skyblue")
+segments(x0 = samp_size, y0 = colMeans(ess_bmth) - 1.96*BMth_ess, 
 	y1 = colMeans(ess_bmth) + 1.96*BMth_ess, col = "skyblue")
 
 abline(h = (det(Target_mat)/det(Tr))^(1/2), lty = 2)
 legend("topright", bty = "n",legend = c("2-step", "1-step", "BM(cuberoot)", "BM(sqroot)", "TRUE"), 
 	col = c("black", "red","blue", "skyblue"), lty = c(1,1,1,1,2), cex=0.5)
-
 dev.off()
+
